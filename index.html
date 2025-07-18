@@ -82,23 +82,23 @@
     <form id="form" class="grid">
       <div>
         <label for="itemWidth">Largura do item (cm)</label>
-        <input type="number" id="itemWidth" step="0.1" required value="100">
+        <input type="number" id="itemWidth" step="0.1" required value="600">
       </div>
       <div>
         <label for="itemHeight">Altura do item (cm)</label>
-        <input type="number" id="itemHeight" step="0.1" required value="50">
+        <input type="number" id="itemHeight" step="0.1" required value="220">
       </div>
       <div class="full">
         <label for="quantity">Quantidade de itens</label>
-        <input type="number" id="quantity" min="1" required value="10">
+        <input type="number" id="quantity" min="1" required value="67">
       </div>
       <div>
         <label for="priceM2">Preço por m² (R$)</label>
-        <input type="number" id="priceM2" step="0.01" required value="50">
+        <input type="number" id="priceM2" step="0.01" required value="38">
       </div>
       <div>
         <label for="rollWidth">Largura da bobina (cm)</label>
-        <input type="number" id="rollWidth" step="0.1" required value="150">
+        <input type="number" id="rollWidth" step="0.1" required value="250">
       </div>
       <button type="submit">Calcular perda</button>
     </form>
@@ -107,47 +107,71 @@
   </div>
 
   <script>
-    document.getElementById('form').addEventListener('submit', e => {
+    form.addEventListener('submit', e => {
       e.preventDefault();
-      // coletar valores
-      const w = parseFloat(itemWidth.value);
-      const h = parseFloat(itemHeight.value);
-      const q = parseInt(quantity.value, 10);
-      const p2 = parseFloat(priceM2.value);
-      const rw = parseFloat(rollWidth.value);
 
-      // conversão pra metros
-      const wM = w / 100;
-      const hM = h / 100;
-      const rwM = rw / 100;
+      // valores brutos
+      const w = +itemWidth.value;      // cm
+      const h = +itemHeight.value;     // cm
+      const q = +quantity.value;
+      const p2 = +priceM2.value;       // R$/m²
+      const rw = +rollWidth.value;     // cm
 
-      // área de um item e total
-      const areaItem = wM * hM;
-      const areaTotal = areaItem * q;
+      // converte pra metros
+      const wM  = w/100;
+      const hM  = h/100;
+      const rwM = rw/100;
 
-      // quantos itens cabem por linha da bobina
-      const perRow = Math.floor(rw / w) || 1;
-      const rows = Math.ceil(q / perRow);
+      // área total necessária
+      const areaTotal = wM * hM * q;
 
-      // comprimento de bobina necessário (m)
-      const lengthNeeded = rows * hM;
+      // orientação A: largura do item alinhada à bobina
+      const perRowA = Math.floor(rw / w);
+      let areaBuyA = Infinity, lenA;
+      if (perRowA > 0) {
+        const rowsA = Math.ceil(q / perRowA);
+        lenA = rowsA * hM;
+        areaBuyA = rwM * lenA;
+      }
 
-      // área comprada e desperdício
-      const areaBuy = rwM * lengthNeeded;
-      const areaWaste = areaBuy - areaTotal;
+      // orientação B: altura do item alinhada à bobina (gira 90°)
+      const perRowB = Math.floor(rw / h);
+      let areaBuyB = Infinity, lenB;
+      if (perRowB > 0) {
+        const rowsB = Math.ceil(q / perRowB);
+        lenB = rowsB * wM;
+        areaBuyB = rwM * lenB;
+      }
 
-      // custos
-      const costUsed = areaTotal * p2;
-      const costWaste = areaWaste * p2;
-      const costTotal = areaBuy * p2;
+      // escolhe a melhor (menor área comprada)
+      let areaBuy, lengthNeeded;
+      if (areaBuyA < areaBuyB) {
+        areaBuy = areaBuyA;
+        lengthNeeded = lenA;
+      } else {
+        areaBuy = areaBuyB;
+        lengthNeeded = lenB;
+      }
 
-      // montar tabela
+      // se nenhuma orientação coube
+      if (!isFinite(areaBuy)) {
+        result.innerHTML = `<p style="color:red">🛑 O item não cabe na bobina em nenhuma orientação.</p>`;
+        return;
+      }
+
+      // perdas e custos
+      const wasteArea = areaBuy - areaTotal;
+      const costUsed  = areaTotal * p2;
+      const costTotal = areaBuy   * p2;
+      const costWaste = wasteArea * p2;
+
+      // monta a tabela
       result.innerHTML = `
         <table>
           <thead>
             <tr>
               <th>Item</th>
-              <th class="small">Unidade</th>
+              <th class="small">Descrição</th>
               <th>Área (m²)</th>
               <th>Custo (R$)</th>
             </tr>
@@ -161,14 +185,14 @@
             </tr>
             <tr>
               <td>Área comprada</td>
-              <td>${(lengthNeeded.toFixed(2))}m × ${rw}cm</td>
+              <td>${lengthNeeded.toFixed(2)}m × ${rw}cm</td>
               <td>${areaBuy.toFixed(3)}</td>
               <td>${costTotal.toFixed(2)}</td>
             </tr>
             <tr>
               <td>Perda</td>
               <td>—</td>
-              <td>${areaWaste.toFixed(3)}</td>
+              <td>${wasteArea.toFixed(3)}</td>
               <td>${costWaste.toFixed(2)}</td>
             </tr>
           </tbody>
