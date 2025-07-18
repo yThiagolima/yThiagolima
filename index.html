@@ -1,79 +1,175 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Calculadora de Lonas</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; }
-    label { display: block; margin: .5rem 0; }
-    input { width: 100%; padding: .5rem; box-sizing: border-box; }
-    button { padding: .6rem 1.2rem; margin-top: 1rem; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
-    th, td { border: 1px solid #ccc; padding: .6rem; text-align: left; }
-    th { background: #f0f0f0; }
+    :root {
+      --bg: #fafafa;
+      --card: #fff;
+      --border: #ddd;
+      --accent: #4a90e2;
+      --text: #333;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    body {
+      background: var(--bg);
+      font-family: sans-serif;
+      color: var(--text);
+      padding: 1rem;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: var(--accent);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .grid.full { grid-column: 1 / -1 }
+    label {
+      font-size: 0.9rem;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    button {
+      grid-column: 1 / -1;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.75rem;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover { background: #357ab8 }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.6rem;
+      text-align: center;
+    }
+    th { background: var(--bg) }
+    .small { font-size: 0.85rem; color: #666 }
   </style>
 </head>
 <body>
-  <h1>Calculadora de Lonas</h1>
-  <form id="form">
-    <label>
-      Altura (m):
-      <input type="number" id="height" step="0.01" value="1" required>
-    </label>
-    <label>
-      Largura (m):
-      <input type="number" id="width" step="0.01" value="1" required>
-    </label>
-    <label>
-      Preço por m² (R$):
-      <input type="number" id="pricePerM2" step="0.01" value="100" required>
-    </label>
-    <label>
-      Perda (m²):
-      <input type="number" id="wasteArea" step="0.01" value="6" required>
-    </label>
-    <button type="submit">Calcular</button>
-  </form>
+  <div class="container">
+    <h1>Calculadora de Lonas</h1>
+    <form id="form" class="grid">
+      <div>
+        <label for="itemWidth">Largura do item (cm)</label>
+        <input type="number" id="itemWidth" step="0.1" required value="100">
+      </div>
+      <div>
+        <label for="itemHeight">Altura do item (cm)</label>
+        <input type="number" id="itemHeight" step="0.1" required value="50">
+      </div>
+      <div class="full">
+        <label for="quantity">Quantidade de itens</label>
+        <input type="number" id="quantity" min="1" required value="10">
+      </div>
+      <div>
+        <label for="priceM2">Preço por m² (R$)</label>
+        <input type="number" id="priceM2" step="0.01" required value="50">
+      </div>
+      <div>
+        <label for="rollWidth">Largura da bobina (cm)</label>
+        <input type="number" id="rollWidth" step="0.1" required value="150">
+      </div>
+      <button type="submit">Calcular perda</button>
+    </form>
 
-  <div id="result"></div>
+    <div id="result"></div>
+  </div>
 
   <script>
     document.getElementById('form').addEventListener('submit', e => {
       e.preventDefault();
-      const h = parseFloat(document.getElementById('height').value);
-      const w = parseFloat(document.getElementById('width').value);
-      const price = parseFloat(document.getElementById('pricePerM2').value);
-      const waste = parseFloat(document.getElementById('wasteArea').value);
-      
-      const area = h * w;
-      const valorLona = area * price;
-      const custoPerda = waste * price;
-      const total = valorLona + custoPerda;
+      // coletar valores
+      const w = parseFloat(itemWidth.value);
+      const h = parseFloat(itemHeight.value);
+      const q = parseInt(quantity.value, 10);
+      const p2 = parseFloat(priceM2.value);
+      const rw = parseFloat(rollWidth.value);
 
-      document.getElementById('result').innerHTML = `
+      // conversão pra metros
+      const wM = w / 100;
+      const hM = h / 100;
+      const rwM = rw / 100;
+
+      // área de um item e total
+      const areaItem = wM * hM;
+      const areaTotal = areaItem * q;
+
+      // quantos itens cabem por linha da bobina
+      const perRow = Math.floor(rw / w) || 1;
+      const rows = Math.ceil(q / perRow);
+
+      // comprimento de bobina necessário (m)
+      const lengthNeeded = rows * hM;
+
+      // área comprada e desperdício
+      const areaBuy = rwM * lengthNeeded;
+      const areaWaste = areaBuy - areaTotal;
+
+      // custos
+      const costUsed = areaTotal * p2;
+      const costWaste = areaWaste * p2;
+      const costTotal = areaBuy * p2;
+
+      // montar tabela
+      result.innerHTML = `
         <table>
           <thead>
             <tr>
               <th>Item</th>
-              <th>Valor Unitário</th>
-              <th>Total (${area.toFixed(2)} m²)</th>
+              <th class="small">Unidade</th>
+              <th>Área (m²)</th>
+              <th>Custo (R$)</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Valor da lona</td>
-              <td>R$ ${valorLona.toFixed(2)}</td>
-              <td>R$ ${valorLona.toFixed(2)}</td>
+              <td>Área útil</td>
+              <td>${q}×(${w}×${h}cm)</td>
+              <td>${areaTotal.toFixed(3)}</td>
+              <td>${costUsed.toFixed(2)}</td>
             </tr>
             <tr>
-              <td>Custo da perda (${waste.toFixed(2)} m²)</td>
-              <td>R$ ${price.toFixed(2)}</td>
-              <td>R$ ${custoPerda.toFixed(2)}</td>
+              <td>Área comprada</td>
+              <td>${(lengthNeeded.toFixed(2))}m × ${rw}cm</td>
+              <td>${areaBuy.toFixed(3)}</td>
+              <td>${costTotal.toFixed(2)}</td>
             </tr>
             <tr>
-              <td><strong>Total com perda</strong></td>
-              <td></td>
-              <td><strong>R$ ${total.toFixed(2)}</strong></td>
+              <td>Perda</td>
+              <td>—</td>
+              <td>${areaWaste.toFixed(3)}</td>
+              <td>${costWaste.toFixed(2)}</td>
             </tr>
           </tbody>
         </table>
