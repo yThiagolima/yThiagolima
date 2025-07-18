@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Calculadora de Lonas</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; }
+    label { display: block; margin: .5rem 0; }
+    input { width: 100%; padding: .5rem; box-sizing: border-box; }
+    button { padding: .6rem 1.2rem; margin-top: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+    th, td { border: 1px solid #ccc; padding: .6rem; text-align: left; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h1>Calculadora de Lonas</h1>
+  <form id="form">
+    <label>
+      Altura (m):
+      <input type="number" id="height" step="0.01" value="1" required>
+    </label>
+    <label>
+      Largura (m):
+      <input type="number" id="width" step="0.01" value="1" required>
+    </label>
+    <label>
+      Preço por m² (R$):
+      <input type="number" id="pricePerM2" step="0.01" value="100" required>
+    </label>
+    <label>
+      Perda (m²):
+      <input type="number" id="wasteArea" step="0.01" value="6" required>
+    </label>
+    <button type="submit">Calcular</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    document.getElementById('form').addEventListener('submit', e => {
+      e.preventDefault();
+      const h = parseFloat(document.getElementById('height').value);
+      const w = parseFloat(document.getElementById('width').value);
+      const price = parseFloat(document.getElementById('pricePerM2').value);
+      const waste = parseFloat(document.getElementById('wasteArea').value);
+      
+      const area = h * w;
+      const valorLona = area * price;
+      const custoPerda = waste * price;
+      const total = valorLona + custoPerda;
+
+      document.getElementById('result').innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Valor Unitário</th>
+              <th>Total (${area.toFixed(2)} m²)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Valor da lona</td>
+              <td>R$ ${valorLona.toFixed(2)}</td>
+              <td>R$ ${valorLona.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td>Custo da perda (${waste.toFixed(2)} m²)</td>
+              <td>R$ ${price.toFixed(2)}</td>
+              <td>R$ ${custoPerda.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td><strong>Total com perda</strong></td>
+              <td></td>
+              <td><strong>R$ ${total.toFixed(2)}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    });
+  </script>
+</body>
+</html>
